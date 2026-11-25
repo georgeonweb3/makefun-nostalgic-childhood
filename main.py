@@ -47,12 +47,18 @@ def main() -> None:
     with open(OUTPUT_PATH, "wb") as handle:
         handle.write(ENTRY.encode("utf-8"))
     # Read-back verification: the graded artifact is the file on disk,
-    # not the string in memory — confirm the bytes landed exactly.
+    # not the string in memory — confirm the bytes landed exactly,
+    # then re-run the gate checks against the disk content itself,
+    # so a partial or truncated write can never pass silently.
     with open(OUTPUT_PATH, "rb") as handle:
         written = handle.read()
     assert written == ENTRY.encode("utf-8"), (
         f"entry.txt on disk differs from ENTRY: {written!r}"
     )
+    on_disk = written.decode("utf-8")
+    assert 1 <= len(on_disk) <= 280, "entry.txt on disk fails the 1-280 gate"
+    assert "\n" not in on_disk and "\r" not in on_disk, "entry.txt on disk is not one line"
+    assert on_disk.count(".") == 1 and on_disk.endswith("."), "entry.txt on disk is not one sentence"
 
 
 if __name__ == "__main__":
